@@ -41,7 +41,10 @@
 	}
 
 /* The function IDs implemented in this TA */
-#define TA_HELLO_WORLD_CMD_INC_VALUE 0
-#define TA_HELLO_WORLD_CMD_DEC_VALUE 1
+#define TA_SAE_CMD_INC_VALUE 0
+
+#define TA_SAE_CMD_DEC_VALUE 1
+
+#define TA_SAE_CMD_TRANSFER  2
 
 #endif /*TA_SAE_H*/

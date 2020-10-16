@@ -35,6 +35,76 @@
 /* To the the UUID (found the the TA's h-file(s)) */
 #include <sae_ta.h>
 
+
+/* TEE resources */
+typedef struct  tee_ctx{
+	TEEC_Context ctx;
+	TEEC_Session sess;
+}TEE_CTX;
+
+void prepare_tee_ctx(TEE_CTX *ctx,TEEC_UUID uuid)
+{
+	uint32_t origin;
+	TEEC_Result res;
+
+	/* Initialize a context connecting us to the TEE */
+	res = TEEC_InitializeContext(NULL, &ctx->ctx);
+	if (res != TEEC_SUCCESS)
+		errx(1, "TEEC_InitializeContext failed with code 0x%x", res);
+
+	/* Open a session with the TA */
+	res = TEEC_OpenSession(&ctx->ctx, &ctx->sess, &uuid,
+			       TEEC_LOGIN_PUBLIC, NULL, NULL, &origin);
+	if (res != TEEC_SUCCESS)
+		errx(1, "TEEC_Opensession failed with code 0x%x origin 0x%x",
+			res, origin);
+
+
+	printf("construct success\n");
+}
+
+void terminate_tee_ctx(TEE_CTX *ctx)
+{
+	TEEC_CloseSession(&ctx->sess);
+	TEEC_FinalizeContext(&ctx->ctx);
+	printf("destruct success\n");
+}
+
+
+
+TEEC_Result transfer_object(TEE_CTX *ctx, char *id)
+{
+	TEEC_Operation op;
+	uint32_t origin;
+	TEEC_Result res;
+	size_t id_len = strlen(id);
+
+	memset(&op, 0, sizeof(op));
+	// op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+	// 				 TEEC_NONE, TEEC_NONE, TEEC_NONE);
+
+	// op.params[0].tmpref.buffer = id;
+	// op.params[0].tmpref.size = id_len;
+
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE,
+									 TEEC_NONE, TEEC_NONE);
+	op.params[0].value.a = 42;
+
+	res = TEEC_InvokeCommand(&ctx->sess,
+				 TA_SAE_CMD_TRANSFER,
+				 &op, &origin);
+
+	switch (res) {
+	case TEEC_SUCCESS:
+	case TEEC_ERROR_ITEM_NOT_FOUND:
+		break;
+	default:
+		printf("Command DELETE failed: 0x%x / %u\n", res, origin);
+	}
+
+	return res;
+}
+
 int main(void)
 {
 	TEEC_Result res;
@@ -68,22 +138,25 @@ int main(void)
 	 */
 
 	/* Clear the TEEC_Operation struct */
+
 	memset(&op, 0, sizeof(op));
 
 	/*
 	 * Prepare the argument. Pass a value in the first parameter,
 	 * the remaining three parameters are unused.
 	 */
+
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE,
 									 TEEC_NONE, TEEC_NONE);
 	op.params[0].value.a = 42;
 
 	/*
-	 * TA_HELLO_WORLD_CMD_INC_VALUE is the actual function in the TA to be
+	 * TA_SAE_CMD_INC_VALUE is the actual function in the TA to be
 	 * called.
 	 */
+
 	printf("Invoking TA to increment %d\n", op.params[0].value.a);
-	res = TEEC_InvokeCommand(&sess, TA_HELLO_WORLD_CMD_INC_VALUE, &op,
+	res = TEEC_InvokeCommand(&sess, TA_SAE_CMD_INC_VALUE, &op,
 							 &err_origin);
 	if (res != TEEC_SUCCESS)
 		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
@@ -97,6 +170,62 @@ int main(void)
 	 * The TA will print "Goodbye!" in the log when the
 	 * session is closed.
 	 */
+
+	
+	// char obj1_id[] = "object#1";
+
+	// size_t id_len = strlen(obj1_id);
+
+	// memset(&op, 0, sizeof(op));
+	// op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+	// 				 TEEC_NONE, TEEC_NONE, TEEC_NONE);
+	// printf("paramTypes: %u\n",op.paramTypes);
+
+
+
+	// op.params[0].tmpref.buffer = obj1_id;
+	// op.params[0].tmpref.size = id_len;
+
+	// res = TEEC_InvokeCommand(&sess,
+	// 			 TA_SAE_CMD_TRANSFER_OBJECT,
+	// 			 &op, &err_origin);
+
+	// switch (res) {
+	// case TEEC_SUCCESS:
+	// case TEEC_ERROR_ITEM_NOT_FOUND:
+	// 	break;
+	// default:
+	// 	printf("Command DELETE failed: 0x%x / %u\n", res, err_origin);
+	// }
+	
+
+	
+
+
+	// char obj1_id[] = "object#1";
+	// TEE_CTX tee_ctx_raii;
+	// prepare_tee_ctx(&tee_ctx_raii,uuid);
+
+	// res = transfer_object(&tee_ctx_raii,obj1_id);
+	// if (res != TEEC_SUCCESS){
+	// 	errx(1, "Failed to transfer an object failed with code 0x%x ",
+	// 		 res);
+	// }
+	// terminate_tee_ctx(&tee_ctx_raii);
+
+	memset(&op, 0, sizeof(op));
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE,
+									 TEEC_NONE, TEEC_NONE);
+	op.params[0].value.a = 42;
+
+
+	printf("Invoking TA to increment %d\n", op.params[0].value.a);
+	res = TEEC_InvokeCommand(&sess, TA_SAE_CMD_TRANSFER, &op,
+							 &err_origin);
+	if (res != TEEC_SUCCESS)
+		errx(1, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
+			 res, err_origin);
+	printf("TA incremented value to %d\n", op.params[0].value.a);
 
 	TEEC_CloseSession(&sess);
 

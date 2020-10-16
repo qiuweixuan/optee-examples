@@ -41,6 +41,9 @@ static TEE_Result delete_object(uint32_t param_types, TEE_Param params[4])
 	char *obj_id;
 	size_t obj_id_sz;
 
+	printf("paramTypes: %u \n",param_types);
+    printf("expParamTypes: %u \n",exp_param_types);
+
 	/*
 	 * Safely get the invocation parameters
 	 */

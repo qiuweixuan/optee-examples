@@ -28,11 +28,12 @@
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
-#include <sae_ta.h>
-
 #include <gmp.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "sae_ta.h"
+#include "ffc.h"
 /*
  * Called when the instance of the TA is created. This is the first call in
  * the TA.
@@ -138,23 +139,49 @@ static TEE_Result dec_value(uint32_t param_types,
 	return TEE_SUCCESS;
 }
 
-static TEE_Result gmp_test(void)
-{
-	mpz_t a;
-	mpz_init(a);
-	mpz_set_str(a, "4A", 16);
+// static TEE_Result transfer_object(uint32_t param_types, TEE_Param params[4])
+// {
+// 	printf("enter\n");
+//     const uint32_t exp_param_types =
+//         TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
+//                         TEE_PARAM_TYPE_NONE,
+//                         TEE_PARAM_TYPE_NONE,
+//                         TEE_PARAM_TYPE_NONE);
+//     TEE_ObjectHandle object;
+//     char *obj_id;
+//     size_t obj_id_sz;
 
-	unsigned int len = mpz_sizeinbase(a, 16) + 2;
-	char *rop = malloc(sizeof(char) * len);
-	mpz_get_str(rop, 16, a);
-	// IMSG("Gmp value: %s", rop);
-	printf("Gmp value: %s \n", rop);
-	free(rop);
+//     /*
+// 	 * Safely get the invocation parameters
+// 	 */
 
-	mpz_clear(a);
+//     printf("paramTypes: %u \n",param_types);
+//     printf("expParamTypes: %u \n",exp_param_types);
 
-	return TEE_SUCCESS;
-}
+//     if (param_types != exp_param_types)
+//         return TEE_ERROR_BAD_PARAMETERS;
+
+//     obj_id_sz = params[0].memref.size;
+//     obj_id = TEE_Malloc(obj_id_sz, 0);
+//     printf("obj_id_sz: %u \n", obj_id_sz);
+
+//     if (!obj_id)
+//         return TEE_ERROR_OUT_OF_MEMORY;
+
+//     TEE_MemMove(obj_id, params[0].memref.buffer, obj_id_sz);
+
+//     TEE_Free(obj_id);
+
+//     return TEE_SUCCESS;
+// }
+
+// static TEE_Result gmp_test(void)
+// {
+
+// 	ffc_test();
+
+// 	return TEE_SUCCESS;
+// }
 
 /*
  * Called when a TA is invoked. sess_ctx hold that value that was
@@ -167,15 +194,18 @@ TEE_Result TA_InvokeCommandEntryPoint(void __maybe_unused *sess_ctx,
 {
 	(void)&sess_ctx; /* Unused parameter */
 
-	gmp_test();
+	// gmp_test();
 
 	switch (cmd_id)
 	{
-	case TA_HELLO_WORLD_CMD_INC_VALUE:
+	case TA_SAE_CMD_INC_VALUE:
 		return inc_value(param_types, params);
-	case TA_HELLO_WORLD_CMD_DEC_VALUE:
+	case TA_SAE_CMD_DEC_VALUE:
 		return dec_value(param_types, params);
+	case TA_SAE_CMD_TRANSFER:
+		return inc_value(param_types, params);
 	default:
+		printf("Command ID 0x%x is not supported",cmd_id);
 		return TEE_ERROR_BAD_PARAMETERS;
 	}
 }

@@ -1,0 +1,1 @@
+srcs-y += ffc.c

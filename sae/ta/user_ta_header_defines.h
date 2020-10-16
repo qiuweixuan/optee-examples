@@ -54,7 +54,7 @@
     {"gp.ta.description", USER_TA_PROP_TYPE_STRING,                          \
      "Example of OP-TEE Hello World Trusted Application"},                   \
     {                                                                        \
-        "gp.ta.version", USER_TA_PROP_TYPE_U32, &(const uint32_t) { 0x0010 } \
+        "gp.ta.version", USER_TA_PROP_TYPE_U32, &(const uint32_t) { 0x00100 } \
     }
 
 #endif /* USER_TA_HEADER_DEFINES_H */
